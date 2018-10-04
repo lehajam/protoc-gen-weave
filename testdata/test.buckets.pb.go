@@ -10,6 +10,7 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
+import _ "github.com/lehajam/protoc-gen-weave/weave"
 import _ "github.com/mwitkow/go-proto-validators"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -30,7 +31,8 @@ type BlogBucket struct {
 }
 
 func NewBlogBucket() BlogBucket {
-	bucket := github_com_iov_one_weave_orm.NewBucket(BlogBucketName, github_com_iov_one_weave_orm.NewSimpleObj(nil, new(Blog)))
+	bucket := github_com_iov_one_weave_orm.NewBucket(BlogBucketName,
+		github_com_iov_one_weave_orm.NewSimpleObj(nil, new(Blog)))
 	return BlogBucket{Bucket: bucket}
 }
 
@@ -39,4 +41,41 @@ func (b BlogBucket) Save(db github_com_iov_one_weave.KVStore, obj github_com_iov
 		return github_com_iov_one_weave_orm.ErrInvalidObject(obj.Value())
 	}
 	return b.Bucket.Save(db, obj)
+}
+
+func (b *Post) Copy() github_com_iov_one_weave_orm.CloneableData {
+	var cpy *Post
+	github_com_jinzhu_copier.Copy(cpy, b)
+	return cpy
+}
+
+const PostBucketName = "posts"
+
+type PostBucket struct {
+	github_com_iov_one_weave_orm.Bucket
+}
+
+func NewPostBucket() PostBucket {
+	bucket := github_com_iov_one_weave_orm.NewBucket(PostBucketName,
+		github_com_iov_one_weave_orm.NewSimpleObj(nil, new(Post))).
+		WithIndex("author", idxAuthor, false)
+	return PostBucket{Bucket: bucket}
+}
+
+func (b PostBucket) Save(db github_com_iov_one_weave.KVStore, obj github_com_iov_one_weave_orm.Object) error {
+	if _, ok := obj.Value().(*Post); !ok {
+		return github_com_iov_one_weave_orm.ErrInvalidObject(obj.Value())
+	}
+	return b.Bucket.Save(db, obj)
+}
+
+func idxAuthor(obj github_com_iov_one_weave_orm.Object) ([]byte, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("Cannot take index of nil")
+	}
+	objAs, ok := obj.Value().(*Post)
+	if !ok {
+		return nil, fmt.Errorf("Can only take index of objAs")
+	}
+	return objAs.Author, nil
 }

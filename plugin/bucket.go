@@ -1,84 +1,3 @@
-package plugin
-
-import (
-	"strings"
-
-	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
-	"github.com/gogo/protobuf/vanity"
-)
-
-type bucketPlugin struct {
-	*generator.Generator
-	generator.PluginImports
-	useGogoImport bool
-}
-
-func NewBucketPlugin(useGogoImport bool) generator.Plugin {
-	return &bucketPlugin{useGogoImport: useGogoImport}
-}
-
-func (p *bucketPlugin) Name() string {
-	return "bucket"
-}
-
-func (p *bucketPlugin) Init(g *generator.Generator) {
-	p.Generator = g
-}
-
-func (p *bucketPlugin) Generate(file *generator.FileDescriptor) {
-	if !p.useGogoImport {
-		vanity.TurnOffGogoImport(file.FileDescriptorProto)
-	}
-
-	p.PluginImports = generator.NewPluginImports(p.Generator)
-	weavePkg := p.NewImport("github.com/iov-one/weave")
-	ormPkg := p.NewImport("github.com/iov-one/weave/orm")
-	copierPkg := p.NewImport("github.com/jinzhu/copier")
-
-	for _, msg := range file.Messages() {
-		if !strings.HasSuffix(msg.GetName(), "Msg") {
-			state := msg.GetName()
-			bucketName := strings.ToLower(state + "s")
-			bucketStruct := state + "Bucket"
-
-			p.P(`func (b *`, state, `) Copy() `, ormPkg.Use(), `.CloneableData {`)
-			p.In()
-			p.P(`var cpy *`, state)
-			p.P(copierPkg.Use(), `.Copy(cpy, b)`)
-			p.P(`return cpy`)
-			p.Out()
-			p.P(`}`)
-			p.P(``)
-			p.P(`const ` + bucketStruct + `Name = "` + bucketName + `"`)
-			p.P(``)
-			p.P(`type ` + bucketStruct + ` struct {`)
-			p.In()
-			p.P(ormPkg.Use(), `.Bucket`)
-			p.Out()
-			p.P(`}`)
-			p.P(``)
-			p.P(`func New`, bucketStruct, `() `, bucketStruct, ` {`)
-			p.In()
-			p.P(`bucket := `, ormPkg.Use(), `.NewBucket(`, bucketStruct, `Name`, `, `, ormPkg.Use(), `.NewSimpleObj(nil, new(`, state, `)))`)
-			p.P(`return ` + bucketStruct + `{ Bucket: bucket }`)
-			p.Out()
-			p.P(`}`)
-			p.P(``)
-			p.P(`func (b `+bucketStruct+`) Save(db `, weavePkg.Use(), `.KVStore, obj `, ormPkg.Use(), `.Object) error {`)
-			p.In()
-			p.P(`if _, ok := obj.Value().(*` + state + `); !ok {`)
-			p.In()
-			p.P(`return `, ormPkg.Use(), `.ErrInvalidObject(obj.Value())`)
-			p.Out()
-			p.P(`}`)
-			p.P(`return b.Bucket.Save(db, obj)`)
-			p.Out()
-			p.P(`}`)
-			p.P(``)
-		}
-	}
-}
-
 // Copy makes a new blog with the same data
 // func (b *Blog) Copy() github_com_iov_one_weave_orm.CloneableData {
 // 	var cpy *Blog
@@ -126,3 +45,152 @@ func (p *bucketPlugin) Generate(file *generator.FileDescriptor) {
 // 	}
 // 	return b.Bucket.Save(db, obj)
 // }
+
+// func idxAuthor(obj orm.Object) ([]byte, error) {
+// 	// these should use proper errors, but they never occur
+// 	// except in case of developer error (wrong data in wrong bucket)
+// 	if obj == nil {
+// 		return nil, errors.New("Cannot take index of nil")
+// 	}
+// 	post, ok := obj.Value().(*Post)
+// 	if !ok {
+// 		return nil, errors.New("Can only take index of Post")
+// 	}
+// 	return post.Author, nil
+// }
+
+package plugin
+
+import (
+	"strings"
+
+	"github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
+	"github.com/gogo/protobuf/vanity"
+	"github.com/iancoleman/strcase"
+	"github.com/lehajam/protoc-gen-weave/weave"
+)
+
+type bucketPlugin struct {
+	*generator.Generator
+	generator.PluginImports
+	useGogoImport bool
+}
+
+func NewBucketPlugin(useGogoImport bool) generator.Plugin {
+	return &bucketPlugin{useGogoImport: useGogoImport}
+}
+
+func (p *bucketPlugin) Name() string {
+	return "bucket"
+}
+
+func (p *bucketPlugin) Init(g *generator.Generator) {
+	p.Generator = g
+}
+
+type index struct {
+	name   string
+	unique bool
+}
+
+func (p *bucketPlugin) Generate(file *generator.FileDescriptor) {
+	if !p.useGogoImport {
+		vanity.TurnOffGogoImport(file.FileDescriptorProto)
+	}
+
+	p.PluginImports = generator.NewPluginImports(p.Generator)
+	weavePkg := p.NewImport("github.com/iov-one/weave")
+	ormPkg := p.NewImport("github.com/iov-one/weave/orm")
+	copierPkg := p.NewImport("github.com/jinzhu/copier")
+
+	for _, msg := range file.Messages() {
+
+		if !strings.HasSuffix(msg.GetName(), "Msg") {
+			state := msg.GetName()
+			bucketName := strings.ToLower(state + "s")
+			bucketStruct := state + "Bucket"
+			indexList := getBucketIndexList(msg)
+
+			p.P(`func (b *`, state, `) Copy() `, ormPkg.Use(), `.CloneableData {`)
+			p.In()
+			p.P(`var cpy *`, state)
+			p.P(copierPkg.Use(), `.Copy(cpy, b)`)
+			p.P(`return cpy`)
+			p.Out()
+			p.P(`}`)
+			p.P(``)
+			p.P(`const ` + bucketStruct + `Name = "` + bucketName + `"`)
+			p.P(``)
+			p.P(`type ` + bucketStruct + ` struct {`)
+			p.In()
+			p.P(ormPkg.Use(), `.Bucket`)
+			p.Out()
+			p.P(`}`)
+			p.P(``)
+			p.P(`func New`, bucketStruct, `() `, bucketStruct, ` {`)
+			p.In()
+			p.P(`bucket := `, ormPkg.Use(), `.NewBucket(`, bucketStruct, `Name`, `,`)
+			p.In()
+			if len(indexList) == 0 {
+				p.P(ormPkg.Use(), `.NewSimpleObj(nil, new(`, state, `)))`)
+			} else {
+				p.P(ormPkg.Use(), `.NewSimpleObj(nil, new(`, state, `))).`)
+				for k, idx := range indexList {
+					if k == len(indexList)-1 {
+						p.P(`WithIndex("`, strcase.ToLowerCamel(idx.name), `", idx`, strcase.ToCamel(idx.name), `, `, idx.unique, `)`)
+					} else {
+						p.P(`WithIndex("`, strcase.ToLowerCamel(idx.name), `", idx`, strcase.ToCamel(idx.name), `, `, idx.unique, `).`)
+					}
+				}
+			}
+			p.Out()
+			p.P(`return ` + bucketStruct + `{ Bucket: bucket }`)
+			p.Out()
+			p.P(`}`)
+			p.P(``)
+			p.P(`func (b `+bucketStruct+`) Save(db `, weavePkg.Use(), `.KVStore, obj `, ormPkg.Use(), `.Object) error {`)
+			p.In()
+			p.P(`if _, ok := obj.Value().(*` + state + `); !ok {`)
+			p.In()
+			p.P(`return `, ormPkg.Use(), `.ErrInvalidObject(obj.Value())`)
+			p.Out()
+			p.P(`}`)
+			p.P(`return b.Bucket.Save(db, obj)`)
+			p.Out()
+			p.P(`}`)
+			p.P(``)
+			for _, idx := range indexList {
+				p.P(`func idx`, strcase.ToCamel(idx.name), `(obj `, ormPkg.Use(), `.Object) ([]byte, error) {`)
+				p.In()
+				p.P(`if obj == nil {`)
+				p.In()
+				p.P(`return nil, fmt.Errorf("Cannot take index of nil")`)
+				p.Out()
+				p.P(`}`)
+				p.P(`objAs, ok := obj.Value().(*`, state, `)`)
+				p.P(`if !ok {`)
+				p.In()
+				p.P(`return nil, fmt.Errorf("Can only take index of objAs")`)
+				p.Out()
+				p.P(`}`)
+				p.P(`return objAs.`, strcase.ToCamel(idx.name), `, nil`)
+				p.Out()
+				p.P(`}`)
+			}
+		}
+	}
+}
+
+func getBucketIndexList(msg *generator.Descriptor) []index {
+	var indexList []index
+	for _, field := range msg.Field {
+		if field.Options != nil {
+			v, err := proto.GetExtension(field.Options, weave.E_Index)
+			if err == nil && v.(*weave.FieldIndex) != nil {
+				indexList = append(indexList, index{field.GetName(), v.(*weave.FieldIndex).GetUnique()})
+			}
+		}
+	}
+	return indexList
+}

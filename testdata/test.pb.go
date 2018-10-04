@@ -7,6 +7,7 @@ import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
+import _ "github.com/lehajam/protoc-gen-weave/weave"
 import _ "github.com/mwitkow/go-proto-validators"
 
 import io "io"
@@ -36,7 +37,7 @@ func (m *Blog) Reset()         { *m = Blog{} }
 func (m *Blog) String() string { return proto.CompactTextString(m) }
 func (*Blog) ProtoMessage()    {}
 func (*Blog) Descriptor() ([]byte, []int) {
-	return fileDescriptor_test_0c462869dedbaabc, []int{0}
+	return fileDescriptor_test_19a48db3785f2b7c, []int{0}
 }
 func (m *Blog) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -86,32 +87,31 @@ func (m *Blog) GetNumArticles() int64 {
 	return 0
 }
 
-// CreateBlogMsg starts a new blog with a set of authors
-type CreateBlogMsg struct {
-	// option (weave.state) = "Blog";
-	// slug is a short, unique string used as primary key
-	Slug string `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
-	// title is longer text used for display
-	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	// initial set of authors (must be 1 - MaxAuthors)
-	Authors              [][]byte `protobuf:"bytes,3,rep,name=authors" json:"authors,omitempty"`
+type Post struct {
+	Title  string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Author []byte `protobuf:"bytes,2,opt,name=author,proto3" json:"author,omitempty"`
+	// a timestamp would differ between nodes and be
+	// non-deterministic when replaying blocks.
+	// block height is the only constant
+	CreationBlock        int64    `protobuf:"varint,3,opt,name=creation_block,json=creationBlock,proto3" json:"creation_block,omitempty"`
+	Text                 string   `protobuf:"bytes,4,opt,name=text,proto3" json:"text,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *CreateBlogMsg) Reset()         { *m = CreateBlogMsg{} }
-func (m *CreateBlogMsg) String() string { return proto.CompactTextString(m) }
-func (*CreateBlogMsg) ProtoMessage()    {}
-func (*CreateBlogMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_test_0c462869dedbaabc, []int{1}
+func (m *Post) Reset()         { *m = Post{} }
+func (m *Post) String() string { return proto.CompactTextString(m) }
+func (*Post) ProtoMessage()    {}
+func (*Post) Descriptor() ([]byte, []int) {
+	return fileDescriptor_test_19a48db3785f2b7c, []int{1}
 }
-func (m *CreateBlogMsg) XXX_Unmarshal(b []byte) error {
+func (m *Post) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *CreateBlogMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *Post) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_CreateBlogMsg.Marshal(b, m, deterministic)
+		return xxx_messageInfo_Post.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -121,42 +121,49 @@ func (m *CreateBlogMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (dst *CreateBlogMsg) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateBlogMsg.Merge(dst, src)
+func (dst *Post) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Post.Merge(dst, src)
 }
-func (m *CreateBlogMsg) XXX_Size() int {
+func (m *Post) XXX_Size() int {
 	return m.Size()
 }
-func (m *CreateBlogMsg) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateBlogMsg.DiscardUnknown(m)
+func (m *Post) XXX_DiscardUnknown() {
+	xxx_messageInfo_Post.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CreateBlogMsg proto.InternalMessageInfo
+var xxx_messageInfo_Post proto.InternalMessageInfo
 
-func (m *CreateBlogMsg) GetSlug() string {
-	if m != nil {
-		return m.Slug
-	}
-	return ""
-}
-
-func (m *CreateBlogMsg) GetTitle() string {
+func (m *Post) GetTitle() string {
 	if m != nil {
 		return m.Title
 	}
 	return ""
 }
 
-func (m *CreateBlogMsg) GetAuthors() [][]byte {
+func (m *Post) GetAuthor() []byte {
 	if m != nil {
-		return m.Authors
+		return m.Author
 	}
 	return nil
 }
 
+func (m *Post) GetCreationBlock() int64 {
+	if m != nil {
+		return m.CreationBlock
+	}
+	return 0
+}
+
+func (m *Post) GetText() string {
+	if m != nil {
+		return m.Text
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*Blog)(nil), "blog.Blog")
-	proto.RegisterType((*CreateBlogMsg)(nil), "blog.CreateBlogMsg")
+	proto.RegisterType((*Post)(nil), "blog.Post")
 }
 func (m *Blog) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
@@ -198,7 +205,7 @@ func (m *Blog) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *CreateBlogMsg) Marshal() (dAtA []byte, err error) {
+func (m *Post) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -208,30 +215,33 @@ func (m *CreateBlogMsg) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CreateBlogMsg) MarshalTo(dAtA []byte) (int, error) {
+func (m *Post) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if len(m.Slug) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintTest(dAtA, i, uint64(len(m.Slug)))
-		i += copy(dAtA[i:], m.Slug)
-	}
 	if len(m.Title) > 0 {
-		dAtA[i] = 0x12
+		dAtA[i] = 0xa
 		i++
 		i = encodeVarintTest(dAtA, i, uint64(len(m.Title)))
 		i += copy(dAtA[i:], m.Title)
 	}
-	if len(m.Authors) > 0 {
-		for _, b := range m.Authors {
-			dAtA[i] = 0x1a
-			i++
-			i = encodeVarintTest(dAtA, i, uint64(len(b)))
-			i += copy(dAtA[i:], b)
-		}
+	if len(m.Author) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintTest(dAtA, i, uint64(len(m.Author)))
+		i += copy(dAtA[i:], m.Author)
+	}
+	if m.CreationBlock != 0 {
+		dAtA[i] = 0x18
+		i++
+		i = encodeVarintTest(dAtA, i, uint64(m.CreationBlock))
+	}
+	if len(m.Text) > 0 {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintTest(dAtA, i, uint64(len(m.Text)))
+		i += copy(dAtA[i:], m.Text)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -273,25 +283,26 @@ func (m *Blog) Size() (n int) {
 	return n
 }
 
-func (m *CreateBlogMsg) Size() (n int) {
+func (m *Post) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Slug)
-	if l > 0 {
-		n += 1 + l + sovTest(uint64(l))
-	}
 	l = len(m.Title)
 	if l > 0 {
 		n += 1 + l + sovTest(uint64(l))
 	}
-	if len(m.Authors) > 0 {
-		for _, b := range m.Authors {
-			l = len(b)
-			n += 1 + l + sovTest(uint64(l))
-		}
+	l = len(m.Author)
+	if l > 0 {
+		n += 1 + l + sovTest(uint64(l))
+	}
+	if m.CreationBlock != 0 {
+		n += 1 + sovTest(uint64(m.CreationBlock))
+	}
+	l = len(m.Text)
+	if l > 0 {
+		n += 1 + l + sovTest(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -440,7 +451,7 @@ func (m *Blog) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CreateBlogMsg) Unmarshal(dAtA []byte) error {
+func (m *Post) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -463,42 +474,13 @@ func (m *CreateBlogMsg) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CreateBlogMsg: wiretype end group for non-group")
+			return fmt.Errorf("proto: Post: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CreateBlogMsg: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Post: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Slug", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTest
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTest
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Slug = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Title", wireType)
 			}
@@ -527,9 +509,9 @@ func (m *CreateBlogMsg) Unmarshal(dAtA []byte) error {
 			}
 			m.Title = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Authors", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Author", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -553,8 +535,58 @@ func (m *CreateBlogMsg) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Authors = append(m.Authors, make([]byte, postIndex-iNdEx))
-			copy(m.Authors[len(m.Authors)-1], dAtA[iNdEx:postIndex])
+			m.Author = append(m.Author[:0], dAtA[iNdEx:postIndex]...)
+			if m.Author == nil {
+				m.Author = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreationBlock", wireType)
+			}
+			m.CreationBlock = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTest
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CreationBlock |= (int64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Text", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTest
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTest
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Text = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -683,27 +715,26 @@ var (
 	ErrIntOverflowTest   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("test.proto", fileDescriptor_test_0c462869dedbaabc) }
+func init() { proto.RegisterFile("test.proto", fileDescriptor_test_19a48db3785f2b7c) }
 
-var fileDescriptor_test_0c462869dedbaabc = []byte{
-	// 292 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0x8f, 0xb1, 0x4e, 0xeb, 0x30,
-	0x14, 0x86, 0xe5, 0x26, 0xf7, 0x52, 0x4c, 0x59, 0x2c, 0x86, 0xa8, 0x43, 0x1a, 0x22, 0x86, 0x0c,
-	0x38, 0xa9, 0xa8, 0x54, 0x89, 0xb1, 0x61, 0x66, 0xc9, 0x06, 0x14, 0x8a, 0xd3, 0x06, 0x27, 0xc2,
-	0xa9, 0xab, 0xf8, 0x98, 0x22, 0x10, 0x33, 0xaf, 0xc6, 0xc8, 0x1b, 0x14, 0xe5, 0x49, 0x50, 0x1d,
-	0x52, 0xd8, 0xce, 0xe7, 0xf3, 0xff, 0x3a, 0x9f, 0x31, 0x86, 0x4c, 0x41, 0xb8, 0xaa, 0x24, 0x48,
-	0x62, 0xa7, 0x42, 0xf2, 0x3e, 0xe5, 0x05, 0xe4, 0x3a, 0x0d, 0xe7, 0xb2, 0x8c, 0xb8, 0xe4, 0x32,
-	0x32, 0xcb, 0x54, 0x3f, 0x18, 0x32, 0x60, 0xa6, 0xa6, 0xd4, 0x1f, 0xff, 0x89, 0x97, 0xeb, 0x02,
-	0x1e, 0xe5, 0x3a, 0xe2, 0x92, 0x9a, 0x25, 0x7d, 0x62, 0xa2, 0x58, 0x30, 0x90, 0x95, 0x8a, 0x76,
-	0x63, 0xd3, 0xf3, 0xaf, 0xb0, 0x1d, 0x0b, 0xc9, 0xc9, 0x11, 0xfe, 0x07, 0x05, 0x88, 0xcc, 0x41,
-	0x1e, 0x0a, 0xf6, 0x93, 0x06, 0x88, 0x83, 0xf7, 0x98, 0x86, 0x5c, 0x56, 0xca, 0xe9, 0x78, 0x56,
-	0xd0, 0x4b, 0x5a, 0x24, 0xc7, 0xb8, 0xb7, 0xd4, 0xe5, 0x8c, 0x55, 0x50, 0xcc, 0x45, 0xa6, 0x1c,
-	0xcb, 0x43, 0x81, 0x95, 0x1c, 0x2c, 0x75, 0x39, 0xf9, 0x79, 0xf2, 0xdf, 0x11, 0x3e, 0xbc, 0xa8,
-	0x32, 0x06, 0xd9, 0xf6, 0xc2, 0xa5, 0xe2, 0xe4, 0x0c, 0xdb, 0x4a, 0x68, 0xde, 0xdc, 0x88, 0xdd,
-	0x7a, 0x33, 0xe8, 0x63, 0xe7, 0xee, 0x86, 0xd1, 0x97, 0x09, 0xbd, 0x1e, 0xd2, 0xf3, 0xd9, 0x94,
-	0x4e, 0xc3, 0xdb, 0xd7, 0xf1, 0xe9, 0x68, 0xf8, 0x76, 0x92, 0x98, 0x2c, 0x71, 0x5b, 0xb1, 0x8e,
-	0x29, 0x75, 0xeb, 0xcd, 0xc0, 0x5e, 0x2d, 0x9e, 0xbb, 0xad, 0xa2, 0xff, 0xab, 0x68, 0x6d, 0x15,
-	0x9b, 0xc4, 0x3d, 0xca, 0xf1, 0x4e, 0x36, 0xee, 0x7d, 0xd4, 0x2e, 0xfa, 0xac, 0x5d, 0xf4, 0x55,
-	0xbb, 0x28, 0xfd, 0x6f, 0x7e, 0x3e, 0xfa, 0x0e, 0x00, 0x00, 0xff, 0xff, 0x12, 0x0a, 0x40, 0xf3,
-	0x74, 0x01, 0x00, 0x00,
+var fileDescriptor_test_19a48db3785f2b7c = []byte{
+	// 287 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x8f, 0xc1, 0x4e, 0x84, 0x30,
+	0x10, 0x86, 0xed, 0x82, 0x18, 0x2b, 0x1a, 0xd3, 0x78, 0x68, 0xf6, 0x80, 0xb8, 0x89, 0x09, 0x17,
+	0x96, 0x83, 0xd1, 0xbb, 0x3c, 0x81, 0xe1, 0xe6, 0x69, 0x53, 0xb0, 0x96, 0xba, 0x85, 0x31, 0x30,
+	0x2c, 0x3e, 0xa2, 0x47, 0xdf, 0x40, 0xc3, 0xd1, 0xa7, 0x30, 0x16, 0xd6, 0x70, 0xf1, 0xd2, 0xfc,
+	0xff, 0x3f, 0xfd, 0xfe, 0xc9, 0x50, 0x8a, 0xb2, 0xc5, 0xf5, 0x6b, 0x03, 0x08, 0xcc, 0xcd, 0x0d,
+	0xa8, 0x65, 0xac, 0x34, 0x96, 0x5d, 0xbe, 0x2e, 0xa0, 0x4a, 0x14, 0x28, 0x48, 0xec, 0x30, 0xef,
+	0x9e, 0xad, 0xb3, 0xc6, 0xaa, 0x11, 0x5a, 0xde, 0xcd, 0xbe, 0x57, 0xbd, 0xc6, 0x2d, 0xf4, 0x89,
+	0x82, 0xd8, 0x0e, 0xe3, 0x9d, 0x30, 0xfa, 0x49, 0x20, 0x34, 0x6d, 0xf2, 0x27, 0x27, 0xee, 0x76,
+	0xc6, 0x19, 0x59, 0x8a, 0x17, 0x51, 0x8d, 0x9b, 0x8a, 0x58, 0xc9, 0x3a, 0xee, 0xa5, 0xd8, 0xc9,
+	0x64, 0xf6, 0x8e, 0xd8, 0xea, 0x91, 0xba, 0xa9, 0x01, 0xc5, 0x2e, 0xe8, 0x21, 0x6a, 0x34, 0x92,
+	0x93, 0x90, 0x44, 0xc7, 0xd9, 0x68, 0x18, 0xa7, 0x47, 0xa2, 0xc3, 0x12, 0x9a, 0x96, 0x2f, 0x42,
+	0x27, 0xf2, 0xb3, 0xbd, 0x65, 0x57, 0xd4, 0xaf, 0xbb, 0x6a, 0x23, 0x1a, 0xd4, 0x85, 0x91, 0x2d,
+	0x77, 0x42, 0x12, 0x39, 0xd9, 0x49, 0xdd, 0x55, 0xf7, 0x53, 0xb4, 0xea, 0xa9, 0xfb, 0x00, 0x2d,
+	0xfe, 0x53, 0x1d, 0x50, 0x6f, 0xec, 0xe2, 0x8b, 0x90, 0x44, 0x7e, 0xea, 0x7d, 0x7f, 0x5e, 0x2e,
+	0xce, 0x0f, 0xb2, 0x29, 0x65, 0xd7, 0xf4, 0xac, 0x68, 0xa4, 0x40, 0x0d, 0xf5, 0x26, 0x37, 0x50,
+	0x6c, 0xa7, 0x15, 0xa7, 0xfb, 0x34, 0xfd, 0x0d, 0x19, 0xa3, 0x2e, 0xca, 0x37, 0xe4, 0xae, 0xed,
+	0xb6, 0x3a, 0xf5, 0xdf, 0x87, 0x80, 0x7c, 0x0c, 0x01, 0xf9, 0x1a, 0x02, 0x92, 0x7b, 0xf6, 0xd0,
+	0x9b, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xa3, 0x88, 0x81, 0x28, 0x9a, 0x01, 0x00, 0x00,
 }
