@@ -3,25 +3,25 @@ syntax = "proto3";
 package blog;
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "github.com/mwitkow/go-proto-validators/validator.proto";
+import "github.com/lehajam/protoc-gen-weave/x/bucket/bucket.proto";
 
 option (gogoproto.marshaler_all) = true;
 option (gogoproto.sizer_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 
 message Blog {
-    string title = 1;
+    string title = 1 [(validator.field) = {length_lt: 100}];
     // Author bytes to be interpreted as weave.Address
-    repeated bytes authors = 2;
-    int64 num_articles = 3;
+    repeated bytes authors = 2 [(validator.field) = {repeated_count_min: 1, repeated_count_max: 10}];
+    int64 num_articles = 3  [(validator.field) = {int_gt: 0}];
 }
 
-// CreateBlogMsg starts a new blog with a set of authors
-message CreateBlogMsg {
-    // option (weave.state) = "Blog";
-    // slug is a short, unique string used as primary key
-    string slug = 1 [(validator.field) = {regex: "^[a-zA-Z0-9_\\-\\.]{6,30}$"}];
-    // title is longer text used for display
-    string title = 2 [(validator.field) = {length_lt: 8, length_gt: 100}];
-    // initial set of authors (must be 1 - MaxAuthors)
-    repeated bytes authors = 3 [(validator.field) = {repeated_count_min: 1, repeated_count_max: 10}];
+message Post {
+    string title = 1 [(validator.field) = {length_lt: 100}];
+    bytes author = 2 [(bucket.index) = {name: "author", unique: false}];
+    // a timestamp would differ between nodes and be
+    // non-deterministic when replaying blocks.
+    // block height is the only constant
+    int64 creation_block = 3 [(validator.field) = {int_gt: 0}];
+    string text = 4 [(validator.field) = {length_lt: 20000}];
 }

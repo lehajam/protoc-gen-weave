@@ -4,5 +4,5 @@ protoc  \
 	--proto_path=. \
 	--gogo_out=. \
 	--govalidators_out=gogoimport=true:. \
-	--weave_out=gogoimport=false:. \
+	--weave_out=gogoimport=true:. \
 	*.proto

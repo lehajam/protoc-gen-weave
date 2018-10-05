@@ -3,12 +3,12 @@
 
 package blog
 
-import regexp "regexp"
 import fmt "fmt"
 import github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 import proto "github.com/gogo/protobuf/proto"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
+import _ "github.com/lehajam/protoc-gen-weave/x/bucket"
 import _ "github.com/mwitkow/go-proto-validators"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -17,26 +17,29 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *Blog) Validate() error {
-	return nil
-}
-
-var _regex_CreateBlogMsg_Slug = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]{6,30}$`)
-
-func (this *CreateBlogMsg) Validate() error {
-	if !_regex_CreateBlogMsg_Slug.MatchString(this.Slug) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Slug", fmt.Errorf(`value '%v' must be a string conforming to regex "^[a-zA-Z0-9_\\-\\.]{6,30}$"`, this.Slug))
-	}
-	if !(len(this.Title) > 100) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Title", fmt.Errorf(`value '%v' must length be greater than '100'`, this.Title))
-	}
-	if !(len(this.Title) < 8) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Title", fmt.Errorf(`value '%v' must length be less than '8'`, this.Title))
+	if !(len(this.Title) < 100) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Title", fmt.Errorf(`value '%v' must length be less than '100'`, this.Title))
 	}
 	if len(this.Authors) < 1 {
 		return github_com_mwitkow_go_proto_validators.FieldError("Authors", fmt.Errorf(`value '%v' must contain at least 1 elements`, this.Authors))
 	}
 	if len(this.Authors) > 10 {
 		return github_com_mwitkow_go_proto_validators.FieldError("Authors", fmt.Errorf(`value '%v' must contain at most 10 elements`, this.Authors))
+	}
+	if !(this.NumArticles > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NumArticles", fmt.Errorf(`value '%v' must be greater than '0'`, this.NumArticles))
+	}
+	return nil
+}
+func (this *Post) Validate() error {
+	if !(len(this.Title) < 100) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Title", fmt.Errorf(`value '%v' must length be less than '100'`, this.Title))
+	}
+	if !(this.CreationBlock > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("CreationBlock", fmt.Errorf(`value '%v' must be greater than '0'`, this.CreationBlock))
+	}
+	if !(len(this.Text) < 20000) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Text", fmt.Errorf(`value '%v' must length be less than '20000'`, this.Text))
 	}
 	return nil
 }
