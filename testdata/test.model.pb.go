@@ -6,11 +6,11 @@ package blog
 import github_com_iov_one_weave "github.com/iov-one/weave"
 import github_com_iov_one_weave_orm "github.com/iov-one/weave/orm"
 import github_com_jinzhu_copier "github.com/jinzhu/copier"
-import proto "github.com/golang/protobuf/proto"
+import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
-import _ "github.com/lehajam/protoc-gen-weave/weave"
+import _ "github.com/lehajam/protoc-gen-weave/x/bucket"
 import _ "github.com/mwitkow/go-proto-validators"
 
 // Reference imports to suppress errors if they are not otherwise used.

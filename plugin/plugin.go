@@ -68,33 +68,34 @@ import (
 	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
 	"github.com/gogo/protobuf/vanity"
 	"github.com/iancoleman/strcase"
-	"github.com/lehajam/protoc-gen-weave/weave"
+	"github.com/lehajam/protoc-gen-weave/x/bucket"
 )
 
-type bucketPlugin struct {
+type plugin struct {
 	*generator.Generator
 	generator.PluginImports
 	useGogoImport bool
 }
 
-func NewBucketPlugin(useGogoImport bool) generator.Plugin {
-	return &bucketPlugin{useGogoImport: useGogoImport}
+func NewPlugin(useGogoImport bool) generator.Plugin {
+	return &plugin{useGogoImport: useGogoImport}
 }
 
-func (p *bucketPlugin) Name() string {
+func (p *plugin) Name() string {
 	return "bucket"
 }
 
-func (p *bucketPlugin) Init(g *generator.Generator) {
+func (p *plugin) Init(g *generator.Generator) {
 	p.Generator = g
 }
 
 type index struct {
-	name   string
-	unique bool
+	name      string
+	fieldName string
+	unique    bool
 }
 
-func (p *bucketPlugin) Generate(file *generator.FileDescriptor) {
+func (p *plugin) Generate(file *generator.FileDescriptor) {
 	if !p.useGogoImport {
 		vanity.TurnOffGogoImport(file.FileDescriptorProto)
 	}
@@ -174,7 +175,7 @@ func (p *bucketPlugin) Generate(file *generator.FileDescriptor) {
 				p.P(`return nil, fmt.Errorf("Can only take index of objAs")`)
 				p.Out()
 				p.P(`}`)
-				p.P(`return objAs.`, strcase.ToCamel(idx.name), `, nil`)
+				p.P(`return objAs.`, strcase.ToCamel(idx.fieldName), `, nil`)
 				p.Out()
 				p.P(`}`)
 			}
@@ -186,9 +187,15 @@ func getBucketIndexList(msg *generator.Descriptor) []index {
 	var indexList []index
 	for _, field := range msg.Field {
 		if field.Options != nil {
-			v, err := proto.GetExtension(field.Options, weave.E_Index)
-			if err == nil && v.(*weave.FieldIndex) != nil {
-				indexList = append(indexList, index{field.GetName(), v.(*weave.FieldIndex).GetUnique()})
+			v, err := proto.GetExtension(field.Options, bucket.E_Index)
+			if err == nil && v.(*bucket.FieldIndex) != nil {
+				fieldIndex := v.(*bucket.FieldIndex)
+				name := fieldIndex.GetName()
+				if name == "" {
+					name = field.GetName()
+				}
+
+				indexList = append(indexList, index{name, field.GetName(), fieldIndex.GetUnique()})
 			}
 		}
 	}
