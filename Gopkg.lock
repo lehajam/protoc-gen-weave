@@ -2,20 +2,19 @@
 
 
 [[projects]]
-  digest = "1:e2f04450c35f2f3404af943421b6eae6e0a3be69dd3d34c5a89b76a09e908d61"
+  digest = "1:19fe3995778c3d0658fb5fdc4a5aa22d9310dd58f987ab3d4b3415529fcf9eff"
   name = "github.com/gogo/protobuf"
   packages = [
     "gogoproto",
     "proto",
     "protoc-gen-gogo/descriptor",
     "protoc-gen-gogo/generator",
-    "protoc-gen-gogo/generator/internal/remap",
     "protoc-gen-gogo/plugin",
     "vanity",
   ]
   pruneopts = "UT"
-  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
-  version = "v1.1.1"
+  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
